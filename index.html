@@ -1,320 +1,130 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ultimate Top-Down Shooter</title>
-    <style>
-        body {
-            margin: 0;
-            overflow: hidden;
-            background-color: black;
-            color: white;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        canvas {
-            display: block;
-            background: #111;
-        }
-        .game-info {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            font-size: 20px;
-            color: white;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        .pause-screen {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 36px;
-            color: white;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 30px;
-            display: none;
-            border-radius: 10px;
-        }
-        .hud {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            font-size: 18px;
-            font-weight: bold;
-            color: white;
-        }
-        .progress-bar {
-            width: 100%;
-            height: 10px;
-            background: rgba(255, 255, 255, 0.5);
-            border-radius: 5px;
-        }
-        .progress-bar-inner {
-            height: 100%;
-            width: 100%;
-            background-color: red;
-            border-radius: 5px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flappy Bird</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+    }
+    canvas {
+      display: block;
+      background: skyblue;
+    }
+  </style>
 </head>
 <body>
-    <div class="game-info">
-        <p>Score: <span id="score">0</span></p>
-        <p>Health: <span id="health">100</span></p>
-        <p>Level: <span id="level">1</span></p>
-    </div>
-    <div class="pause-screen">
-        <p>Game Paused</p>
-        <p>Press 'P' to Resume</p>
-    </div>
-    <canvas id="gameCanvas"></canvas>
-    <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+<canvas id="gameCanvas"></canvas>
+<script>
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
 
-        // Load saved data from localStorage
-        const savedData = JSON.parse(localStorage.getItem('gameData')) || {
-            score: 0,
-            health: 100,
-            level: 1
-        };
+  canvas.width = 480;
+  canvas.height = 640;
 
-        // Player setup with better graphics
-        const player = {
-            x: canvas.width / 2,
-            y: canvas.height / 2,
-            size: 30,
-            color: 'limegreen',
-            speed: 6,
-            health: savedData.health,
-            maxHealth: 100,
-            damage: 10,
-            velocity: { x: 0, y: 0 }
-        };
+  const bird = {
+    x: 50,
+    y: canvas.height / 2,
+    radius: 12,
+    gravity: 0.6,
+    lift: -12,
+    velocity: 0
+  };
 
-        // Bullet setup with physics for velocity and gravity
-        const bullets = [];
-        const bulletSpeed = 15;
-        const gravity = 0.1;
+  const pipes = [];
+  const pipeWidth = 60;
+  const pipeGap = 120;
+  let frameCount = 0;
+  let score = 0;
+  let isGameOver = false;
 
-        // Enemy setup
-        let enemies = [];
-        const enemySpeed = 3;
-        const maxEnemies = 15;
+  function drawBird() {
+    ctx.beginPath();
+    ctx.arc(bird.x, bird.y, bird.radius, 0, Math.PI * 2);
+    ctx.fillStyle = 'yellow';
+    ctx.fill();
+    ctx.strokeStyle = 'black';
+    ctx.stroke();
+    ctx.closePath();
+  }
 
-        // Power-ups
-        const powerUps = [];
-        const powerUpSpeed = 3;
+  function drawPipes() {
+    pipes.forEach(pipe => {
+      ctx.fillStyle = 'green';
+      ctx.fillRect(pipe.x, 0, pipeWidth, pipe.top);
+      ctx.fillRect(pipe.x, pipe.top + pipeGap, pipeWidth, canvas.height - pipe.top - pipeGap);
+    });
+  }
 
-        // Score and Level
-        let score = savedData.score;
-        let level = savedData.level;
+  function updateBird() {
+    bird.velocity += bird.gravity;
+    bird.y += bird.velocity;
+    if (bird.y + bird.radius > canvas.height || bird.y - bird.radius < 0) {
+      isGameOver = true;
+    }
+  }
 
-        // Pause state
-        let isPaused = false;
+  function updatePipes() {
+    if (frameCount % 100 === 0) {
+      const top = Math.random() * (canvas.height / 2);
+      pipes.push({ x: canvas.width, top });
+    }
+    pipes.forEach(pipe => {
+      pipe.x -= 2;
+      if (pipe.x + pipeWidth < 0) {
+        pipes.shift();
+        score++;
+      }
+      if (
+        bird.x + bird.radius > pipe.x &&
+        bird.x - bird.radius < pipe.x + pipeWidth &&
+        (bird.y - bird.radius < pipe.top || bird.y + bird.radius > pipe.top + pipeGap)
+      ) {
+        isGameOver = true;
+      }
+    });
+  }
 
-        // Controls
-        const keys = {};
-        window.addEventListener('keydown', (e) => (keys[e.key] = true));
-        window.addEventListener('keyup', (e) => (keys[e.key] = false));
+  function displayScore() {
+    ctx.fillStyle = 'white';
+    ctx.font = '24px Arial';
+    ctx.fillText(`Score: ${score}`, 10, 30);
+  }
 
-        // Audio setup
-        const shootSound = new Audio('https://www.soundjay.com/button/beep-07.wav');
-        const enemyHitSound = new Audio('https://www.soundjay.com/button/beep-09.wav');
-        const backgroundMusic = new Audio('https://www.soundjay.com/button/beep-05.wav');
-        backgroundMusic.loop = true;
-        backgroundMusic.volume = 0.2;
-        backgroundMusic.play();
+  function gameLoop() {
+    if (isGameOver) {
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = 'white';
+      ctx.font = '36px Arial';
+      ctx.fillText('Game Over', canvas.width / 2 - 80, canvas.height / 2 - 20);
+      ctx.fillText(`Final Score: ${score}`, canvas.width / 2 - 90, canvas.height / 2 + 20);
+      return;
+    }
 
-        // Spawn enemies
-        setInterval(() => {
-            if (enemies.length < maxEnemies) {
-                enemies.push({
-                    x: Math.random() * canvas.width,
-                    y: 0,
-                    size: 30,
-                    color: 'red',
-                    speed: enemySpeed + Math.random() * 2,
-                    health: 30
-                });
-            }
-        }, 1000);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Spawn power-ups
-        setInterval(() => {
-            powerUps.push({
-                x: Math.random() * canvas.width,
-                y: Math.random() * canvas.height,
-                size: 15,
-                type: Math.random() < 0.5 ? 'health' : 'damage'
-            });
-        }, 5000);
+    drawBird();
+    drawPipes();
+    displayScore();
 
-        // Game loop
-        function gameLoop() {
-            if (isPaused) {
-                return;
-            }
+    updateBird();
+    updatePipes();
 
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+    frameCount++;
+    requestAnimationFrame(gameLoop);
+  }
 
-            // Update player velocity and movement with physics
-            if (keys['ArrowUp']) player.velocity.y -= player.speed;
-            if (keys['ArrowDown']) player.velocity.y += player.speed;
-            if (keys['ArrowLeft']) player.velocity.x -= player.speed;
-            if (keys['ArrowRight']) player.velocity.x += player.speed;
+  document.addEventListener('keydown', () => {
+    if (!isGameOver) {
+      bird.velocity = bird.lift;
+    }
+  });
 
-            // Apply gravity to player
-            player.velocity.y += gravity;
-
-            // Update player position
-            player.x += player.velocity.x;
-            player.y += player.velocity.y;
-
-            // Limit player movement within the canvas bounds
-            if (player.x < 0) player.x = 0;
-            if (player.x > canvas.width - player.size) player.x = canvas.width - player.size;
-            if (player.y < 0) player.y = 0;
-            if (player.y > canvas.height - player.size) player.y = canvas.height - player.size;
-
-            // Draw player with enhanced graphics
-            ctx.fillStyle = player.color;
-            ctx.beginPath();
-            ctx.arc(player.x + player.size / 2, player.y + player.size / 2, player.size / 2, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Update bullets with velocity and gravity
-            for (let i = bullets.length - 1; i >= 0; i--) {
-                const bullet = bullets[i];
-                bullet.y -= bulletSpeed + bullet.velocity.y;
-                bullet.x += bullet.velocity.x;
-
-                bullet.velocity.y += gravity;
-
-                if (bullet.y < 0 || bullet.x < 0 || bullet.x > canvas.width) {
-                    bullets.splice(i, 1);
-                } else {
-                    ctx.fillStyle = 'yellow';
-                    ctx.fillRect(bullet.x, bullet.y, bullet.size, bullet.size);
-                }
-            }
-
-            // Update enemies with new movement and health
-            for (let i = enemies.length - 1; i >= 0; i--) {
-                const enemy = enemies[i];
-                enemy.y += enemy.speed;
-
-                // Check for collision with player
-                if (
-                    enemy.x < player.x + player.size &&
-                    enemy.x + enemy.size > player.x &&
-                    enemy.y < player.y + player.size &&
-                    enemy.y + enemy.size > player.y
-                ) {
-                    player.health -= 10;
-                    enemyHitSound.play();
-                    enemies.splice(i, 1);
-                    continue;
-                }
-
-                // Check for collision with bullets
-                for (let j = bullets.length - 1; j >= 0; j--) {
-                    const bullet = bullets[j];
-                    if (
-                        bullet.x < enemy.x + enemy.size &&
-                        bullet.x + bullet.size > enemy.x &&
-                        bullet.y < enemy.y + enemy.size &&
-                        bullet.y + bullet.size > enemy.y
-                    ) {
-                        score += 10;
-                        enemies.splice(i, 1);
-                        bullets.splice(j, 1);
-                        break;
-                    }
-                }
-
-                // Render enemies with visual effects
-                ctx.fillStyle = enemy.color;
-                ctx.beginPath();
-                ctx.arc(enemy.x + enemy.size / 2, enemy.y + enemy.size / 2, enemy.size / 2, 0, Math.PI * 2);
-                ctx.fill();
-            }
-
-            // Update power-ups
-            for (let i = powerUps.length - 1; i >= 0; i--) {
-                const powerUp = powerUps[i];
-                powerUp.y += powerUpSpeed;
-
-                // Check for collision with player
-                if (
-                    powerUp.x < player.x + player.size &&
-                    powerUp.x + powerUp.size > player.x &&
-                    powerUp.y < player.y + player.size &&
-                    powerUp.y + powerUp.size > player.y
-                ) {
-                    if (powerUp.type === 'health') {
-                        player.health = Math.min(player.health + 20, player.maxHealth);
-                    } else if (powerUp.type === 'damage') {
-                        player.damage += 5;
-                    }
-                    powerUps.splice(i, 1);
-                }
-
-                // Draw power-up
-                ctx.fillStyle = powerUp.type === 'health' ? 'green' : 'orange';
-                ctx.beginPath();
-                ctx.arc(powerUp.x + powerUp.size / 2, powerUp.y + powerUp.size / 2, powerUp.size / 2, 0, Math.PI * 2);
-                ctx.fill();
-            }
-
-            // Update HUD
-            document.getElementById('score').innerText = score;
-            document.getElementById('health').innerText = player.health;
-            document.getElementById('level').innerText = level;
-
-            // Save game data
-            localStorage.setItem('gameData', JSON.stringify({
-                score: score,
-                health: player.health,
-                level: level
-            }));
-
-            // Continue game loop
-            requestAnimationFrame(gameLoop);
-        }
-
-        // Shooting mechanism
-        window.addEventListener('click', (e) => {
-            if (isPaused) return;
-
-            const mouseX = e.clientX;
-            const mouseY = e.clientY;
-            const dx = mouseX - player.x;
-            const dy = mouseY - player.y;
-            const angle = Math.atan2(dy, dx);
-
-            bullets.push({
-                x: player.x + player.size / 2,
-                y: player.y + player.size / 2,
-                size: 10,
-                velocity: { x: Math.cos(angle) * bulletSpeed, y: Math.sin(angle) * bulletSpeed }
-            });
-            shootSound.play();
-        });
-
-        // Pause functionality
-        window.addEventListener('keydown', (e) => {
-            if (e.key === 'p') {
-                isPaused = !isPaused;
-                document.querySelector('.pause-screen').style.display = isPaused ? 'block' : 'none';
-            }
-        });
-
-        // Start game loop
-        gameLoop();
-    </script>
+  gameLoop();
+</script>
 </body>
 </html>
