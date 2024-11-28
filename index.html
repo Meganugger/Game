@@ -3,16 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Flappy Bird</title>
+  <title>Flappy Bird Ultimate</title>
   <style>
     body {
       margin: 0;
       overflow: hidden;
+      background: #70c5ce;
       font-family: Arial, sans-serif;
     }
     canvas {
       display: block;
-      background: skyblue;
+      background: linear-gradient(to bottom, #70c5ce, #ffffff);
     }
   </style>
 </head>
@@ -25,50 +26,53 @@
   canvas.width = 480;
   canvas.height = 640;
 
+  const birdImage = new Image();
+  birdImage.src = 'https://raw.githubusercontent.com/sourabhv/FlapPyBird/master/assets/sprites/redbird-midflap.png';
+
+  const pipeTopImage = new Image();
+  pipeTopImage.src = 'https://raw.githubusercontent.com/sourabhv/FlapPyBird/master/assets/sprites/pipe-green.png';
+
+  const pipeBottomImage = new Image();
+  pipeBottomImage.src = 'https://raw.githubusercontent.com/sourabhv/FlapPyBird/master/assets/sprites/pipe-green.png';
+
   const bird = {
     x: 50,
     y: canvas.height / 2,
-    radius: 12,
-    gravity: 0.6,
-    lift: -12,
+    width: 34,
+    height: 24,
+    gravity: 0.5,
+    lift: -10,
     velocity: 0
   };
 
   const pipes = [];
-  const pipeWidth = 60;
-  const pipeGap = 120;
+  const pipeWidth = 52;
+  const pipeGap = 140;
   let frameCount = 0;
   let score = 0;
   let isGameOver = false;
 
   function drawBird() {
-    ctx.beginPath();
-    ctx.arc(bird.x, bird.y, bird.radius, 0, Math.PI * 2);
-    ctx.fillStyle = 'yellow';
-    ctx.fill();
-    ctx.strokeStyle = 'black';
-    ctx.stroke();
-    ctx.closePath();
+    ctx.drawImage(birdImage, bird.x, bird.y, bird.width, bird.height);
   }
 
   function drawPipes() {
     pipes.forEach(pipe => {
-      ctx.fillStyle = 'green';
-      ctx.fillRect(pipe.x, 0, pipeWidth, pipe.top);
-      ctx.fillRect(pipe.x, pipe.top + pipeGap, pipeWidth, canvas.height - pipe.top - pipeGap);
+      ctx.drawImage(pipeTopImage, pipe.x, pipe.top - pipeTopImage.height, pipeWidth, pipeTopImage.height);
+      ctx.drawImage(pipeBottomImage, pipe.x, pipe.top + pipeGap, pipeWidth, pipeBottomImage.height);
     });
   }
 
   function updateBird() {
     bird.velocity += bird.gravity;
     bird.y += bird.velocity;
-    if (bird.y + bird.radius > canvas.height || bird.y - bird.radius < 0) {
+    if (bird.y + bird.height > canvas.height || bird.y < 0) {
       isGameOver = true;
     }
   }
 
   function updatePipes() {
-    if (frameCount % 100 === 0) {
+    if (frameCount % 120 === 0) {
       const top = Math.random() * (canvas.height / 2);
       pipes.push({ x: canvas.width, top });
     }
@@ -79,9 +83,9 @@
         score++;
       }
       if (
-        bird.x + bird.radius > pipe.x &&
-        bird.x - bird.radius < pipe.x + pipeWidth &&
-        (bird.y - bird.radius < pipe.top || bird.y + bird.radius > pipe.top + pipeGap)
+        bird.x + bird.width > pipe.x &&
+        bird.x < pipe.x + pipeWidth &&
+        (bird.y < pipe.top || bird.y + bird.height > pipe.top + pipeGap)
       ) {
         isGameOver = true;
       }
@@ -124,7 +128,9 @@
     }
   });
 
-  gameLoop();
+  birdImage.onload = () => {
+    gameLoop();
+  };
 </script>
 </body>
 </html>
